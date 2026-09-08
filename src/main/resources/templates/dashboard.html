@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Astecob - Gestão de Guias</title>
+    <meta name="description" content="Painel de gestão de clientes e notificações de guias fiscais da Astecob.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+
+    <!-- Bibliotecas Externas -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos Incorporados -->
+    <style>
+        :root {
+            --ink: #1F3A3D;
+            --ink-bg: #E9EFEE;
+            --paper: #FAF6ED;
+            --panel: #FFFFFF;
+            --line: #E3DAC3;
+            --green: #3F7D58;
+            --green-bg: #E9F2EB;
+            --rust: #AE3D34;
+            --rust-bg: #F6E9E7;
+            --gold: #A8631C;
+            --gold-bg: #F5ECDC;
+        }
+
+        * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+
+        body {
+            background-color: var(--paper);
+            color: var(--ink);
+            font-family: 'Public Sans', sans-serif;
+            font-size: 1.05rem;
+        }
+
+        h2, h4, .card-title { font-family: 'Fraunces', serif; }
+
+        a:focus-visible, button:focus-visible, input:focus-visible, .nav-link:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+        }
+
+        .masthead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--paper);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1.25rem 0 1.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--line);
+        }
+
+        .masthead h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .masthead h2 i { color: var(--gold); }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--green-bg);
+            color: var(--green);
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.95rem;
+        }
+
+        .status-pill .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .folder-tabs {
+            display: flex;
+            gap: 0.4rem;
+            border-bottom: none;
+            margin-bottom: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .folder-tabs .nav-link {
+            border: none;
+            background: var(--ink-bg);
+            color: var(--ink);
+            opacity: 0.6;
+            font-family: 'Public Sans', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.9rem 1.4rem;
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        .folder-tabs .nav-link:hover { opacity: 0.85; }
+
+        .folder-tabs .nav-link.active {
+            opacity: 1;
+            transform: translateY(2px);
+            box-shadow: 0 -2px 0 rgba(0,0,0,0.03) inset;
+        }
+
+        #clientes-tab.active { background: var(--ink); color: #fff; }
+        #processados-tab.active { background: var(--green-bg); color: var(--green); }
+        #erros-tab.active { background: var(--rust-bg); color: var(--rust); }
+        #gerenciar-tab.active { background: var(--gold-bg); color: var(--gold); }
+
+        .folder-body {
+            background: var(--panel);
+            border-radius: 0 14px 14px 14px;
+            border: 1px solid var(--line);
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(31, 58, 61, 0.05);
+        }
+
+        @media (max-width: 576px) {
+            .folder-body { padding: 1.25rem; }
+        }
+
+        tbody tr {
+            transition: background-color 0.12s ease;
+        }
+
+        tbody tr:hover td {
+            background-color: var(--ink-bg);
+        }
+
+        #clientes.folder-body { border-top: 4px solid var(--ink); }
+        #processados.folder-body { border-top: 4px solid var(--green); }
+        #erros.folder-body { border-top: 4px solid var(--rust); }
+        #gerenciar.folder-body { border-top: 4px solid var(--gold); }
+
+        .card-title { font-size: 1.4rem; font-weight: 600; }
+
+        .form-label { font-weight: 600; color: var(--ink); }
+
+        .form-control {
+            border: 1.5px solid var(--line);
+            border-radius: 10px;
+            padding: 0.7rem 0.9rem;
+            font-size: 1.05rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--ink);
+            box-shadow: 0 0 0 3px var(--ink-bg);
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            border-color: var(--ink);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            font-weight: 600;
+            transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+
+        .btn-primary:hover { background: #16292b; border-color: #16292b; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        table { font-size: 1.02rem; }
+
+        thead th {
+            font-weight: 600;
+            color: var(--ink);
+            background: transparent !important;
+            border-bottom: 2px solid var(--line) !important;
+        }
+
+        tbody td { padding-top: 0.9rem; padding-bottom: 0.9rem; vertical-align: middle; }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 600;
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+        }
+
+        .badge-enviado { background: var(--green-bg); color: var(--green); }
+        .badge-pendente { background: var(--rust-bg); color: var(--rust); }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #8a8375;
+        }
+
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: 0.6rem; opacity: 0.6; }
+        .empty-state span { font-size: 1.05rem; }
+
+        .btn-editar {
+            border: 1.5px solid var(--gold);
+            color: var(--gold);
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            margin-right: 0.3rem;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .btn-editar:hover { background: var(--gold); color: #fff; }
+
+        .btn-excluir {
+            border: 1.5px solid var(--rust);
+            color: var(--rust);
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .btn-excluir:hover { background: var(--rust); color: #fff; }
+
+        .no-results-row td {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #8a8375;
+        }
+
+        .pendencia-nome { font-weight: 600; color: var(--rust); }
+
+        .modal-content {
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background-color: var(--panel);
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOAST DE NOTIFICAÇÃO FLUTUANTE (Bloco 2) -->
+<div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <div id="liveToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toastMessage" style="font-size: 1.02rem;">
+                Mensagem aqui
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5" style="max-width: 1100px;">
+
+    <div class="masthead">
+        <h2><i class="bi bi-folder2-open"></i> Painel Astecob</h2>
+        <span class="status-pill"><span class="dot"></span> Sistema funcionando</span>
+    </div>
+
+    <!-- NAVEGAÇÃO POR ABAS -->
+    <ul class="nav folder-tabs" id="painelTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="clientes-tab" data-bs-toggle="tab" data-bs-target="#clientes" type="button">
+                <i class="bi bi-person-plus-fill"></i> Cadastrar clientes
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="processados-tab" data-bs-toggle="tab" data-bs-target="#processados" type="button">
+                <i class="bi bi-check2-circle"></i> Guias enviadas
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="erros-tab" data-bs-toggle="tab" data-bs-target="#erros" type="button">
+                <i class="bi bi-exclamation-triangle-fill"></i> Pendências
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="gerenciar-tab" data-bs-toggle="tab" data-bs-target="#gerenciar" type="button">
+                <i class="bi bi-people-fill"></i> Gerenciar clientes
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="painelTabsContent">
+
+        <!-- ABA 1: CADASTRAR CLIENTES -->
+        <div class="tab-pane fade show active folder-body" id="clientes">
+            <div class="row">
+                <div class="col-md-5 mb-4 mb-md-0">
+                    <h4 class="card-title mb-3">Novo cliente</h4>
+                    <form th:action="@{/dashboard/clientes}" th:object="${novoCliente}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Razão social / nome da empresa</label>
+                            <input type="text" class="form-control" th:field="*{nomeEmpresa}" required placeholder="Ex: Empresa X LTDA">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-control" th:field="*{email}" required placeholder="contato@empresa.com">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">WhatsApp (com DDD)</label>
+                            <input type="text" class="form-control" th:field="*{telefoneWhatsapp}" required placeholder="21999998888">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Salvar cliente</button>
+                    </form>
+                </div>
+
+                <div class="col-md-7">
+                    <h4 class="card-title mb-3">Clientes cadastrados</h4>
+                    <!-- Auto-refresh HTMX -->
+                    <div class="table-responsive" hx-get="/dashboard" hx-select="#clientes .table" hx-target="this" hx-trigger="every 5s">
+                        <table class="table align-middle">
+                            <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>E-mail</th>
+                                <th>WhatsApp</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="c : ${listaClientes}">
+                                <td th:text="${c.nomeEmpresa}">-</td>
+                                <td th:text="${c.email}">-</td>
+                                <td th:text="${c.telefoneWhatsapp}">-</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(listaClientes)}">
+                                <td colspan="3">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <span>Nenhum cliente cadastrado ainda.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 2: PROCESSADOS (Guias Enviadas) -->
+        <div class="tab-pane fade folder-body" id="processados">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title m-0">Histórico de envios</h4>
+                <button type="button" class="btn btn-sm" onclick="limparHistoricoVisualmente()" style="border: 1.5px solid var(--rust); color: var(--rust); border-radius: 8px; font-weight: 600;">
+                    <i class="bi bi-eye-slash"></i> Limpar Visualização
+                </button>
+            </div>
+
+            <!-- Auto-refresh HTMX -->
+            <div class="table-responsive" id="tabela-historico-container" hx-get="/dashboard" hx-select="#processados .table" hx-target="this" hx-trigger="every 5s">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Cliente / Empresa</th>
+                        <th>E-mail</th>
+                        <th>WhatsApp</th>
+                        <th>Data e Hora</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-historico">
+                    <tr th:each="h : ${historicoNotificacoes}">
+                        <td class="fw-semibold" th:text="${h.nomeEmpresa != null ? h.nomeEmpresa : '-'}">Empresa X</td>
+
+                        <!-- Coluna E-mail com emoji baseado no canal e resultado -->
+                        <td>
+                            <span th:text="${h.email != null ? h.email : '-'}">email@cliente.com</span>
+                            <span th:if="${h.canal != null and h.canal.name() == 'EMAIL'}">
+                                <span th:if="${h.resultado != null and h.resultado.name() == 'SUCESSO'}"> ✅</span>
+                                <span th:if="${h.resultado != null and h.resultado.name() == 'FALHA'}"> ❌</span>
+                            </span>
+                        </td>
+
+                        <!-- Coluna WhatsApp com emoji baseado no canal e resultado -->
+                        <td>
+                            <span th:text="${h.telefoneWhatsapp != null ? h.telefoneWhatsapp : '-'}">21999998888</span>
+                            <span th:if="${h.canal != null and h.canal.name() == 'WHATSAPP'}">
+                                <span th:if="${h.resultado != null and h.resultado.name() == 'SUCESSO'}"> ✅</span>
+                                <span th:if="${h.resultado != null and h.resultado.name() == 'FALHA'}"> ❌</span>
+                            </span>
+                        </td>
+
+                        <td th:text="${#temporals.format(h.dataHora, 'dd/MM/yyyy HH:mm')}">-</td>
+
+                        <td class="text-center">
+                            <form th:action="@{/dashboard/guias/{id}/reenviar(id=${h.guiaId})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm" style="border: 1.5px solid var(--green); color: var(--green); border-radius: 8px; font-weight: 600;" title="Reenviar Notificação">
+                                    <i class="bi bi-arrow-repeat"></i> Reenviar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(historicoNotificacoes)}">
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="bi bi-send"></i>
+                                <span>Nenhuma guia enviada até o momento.</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ABA 3: PENDÊNCIAS -->
+        <div class="tab-pane fade folder-body" id="erros">
+            <h4 class="card-title mb-3">Pendências de cadastro</h4>
+            <!-- Auto-refresh HTMX -->
+            <div class="table-responsive" hx-get="/dashboard" hx-select="#erros .table" hx-target="this" hx-trigger="every 5s">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Empresa pendente</th>
+                        <th>Tipo de Guia</th>
+                        <th>Aviso</th>
+                        <th class="text-center" style="width: 180px;">Ação</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${pendencias}">
+                        <td class="pendencia-nome" th:text="${p.nomeEmpresa}">-</td>
+                        <td th:text="${p.tipoGuia}">-</td>
+                        <td><span class="badge-status badge-pendente"><i class="bi bi-hourglass-split"></i> Aguardando cadastro</span></td>
+                        <td class="text-center">
+                            <!-- Botão de Ação Direta para Cadastrar (Bloco 4 - Corrigido com literal substitution) -->
+                            <button type="button" class="btn btn-sm" th:attr="onclick=|resolverPendencia('${p.nomeEmpresa}')|" style="border: 1.5px solid var(--ink); color: var(--ink); border-radius: 8px; font-weight: 600;">
+                                <i class="bi bi-person-plus"></i> Cadastrar
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(pendencias)}">
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <i class="bi bi-check2-all"></i>
+                                <span>Nenhuma pendência encontrada.</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ABA 4: GERENCIAR CLIENTES -->
+        <div class="tab-pane fade folder-body" id="gerenciar">
+            <h4 class="card-title mb-3">Gestão e exclusão de clientes</h4>
+
+            <!-- Input de Pesquisa Rápida (Bloco 3) -->
+            <div class="mb-3">
+                <input type="text" id="inputBuscaCliente" class="form-control" placeholder="🔍 Pesquisar cliente por nome ou e-mail..." aria-label="Pesquisar cliente por nome ou e-mail" onkeyup="filtrarClientes()">
+            </div>
+
+            <!-- Auto-refresh HTMX -->
+            <div class="table-responsive" hx-get="/dashboard" hx-select="#gerenciar .table" hx-target="this" hx-trigger="every 5s">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>E-mail</th>
+                        <th>WhatsApp</th>
+                        <th class="text-center" style="width: 200px;">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${listaClientes}">
+                        <td class="fw-semibold" th:text="${c.nomeEmpresa}">-</td>
+                        <td th:text="${c.email}">-</td>
+                        <td th:text="${c.telefoneWhatsapp}">-</td>
+                        <td class="text-center">
+                            <div class="d-inline-flex">
+                                <button type="button" class="btn btn-editar btn-sm" data-bs-toggle="modal"
+                                        th:data-bs-target="'#modalEditar-' + ${c.id}">
+                                    <i class="bi bi-pencil-square"></i> Editar
+                                </button>
+
+                                <form th:action="@{/dashboard/clientes/{id}/deletar(id=${c.id})}" method="post"
+                                      th:data-nome="${c.nomeEmpresa}"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir o cliente ' + this.getAttribute('data-nome') + '?');">
+                                    <button type="submit" class="btn btn-excluir btn-sm">
+                                        <i class="bi bi-trash3-fill"></i> Excluir
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- MODAL DE EDIÇÃO -->
+                            <div class="modal fade text-start" th:id="'modalEditar-' + ${c.id}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header border-0 pb-0">
+                                            <h5 class="modal-title font-serif">Editar Cliente</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                        </div>
+                                        <form th:action="@{/dashboard/clientes/{id}/editar(id=${c.id})}" method="post">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Razão Social / Nome da Empresa</label>
+                                                    <input type="text" class="form-control" name="nomeEmpresa" th:value="${c.nomeEmpresa}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">E-mail</label>
+                                                    <input type="email" class="form-control" name="email" th:value="${c.email}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">WhatsApp (com DDD)</label>
+                                                    <input type="text" class="form-control" name="telefoneWhatsapp" th:value="${c.telefoneWhatsapp}" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-0 pt-0">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Salvar Alterações</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(listaClientes)}">
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <i class="bi bi-people"></i>
+                                <span>Nenhum cliente disponível para gerenciamento.</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Scripts Unificados -->
+<script th:inline="javascript">
+    function aplicarEstadoLimpo() {
+        const tbody = document.getElementById('corpo-tabela-historico');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <i class="bi bi-eye-slash"></i>
+                            <span>Visualização limpa temporariamente. (Os dados continuam salvos no banco).</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Inicialização ao carregar a página (Toast, localStorage do Histórico, aba ativa)
+    document.addEventListener("DOMContentLoaded", function() {
+        if (localStorage.getItem('historicoOculto') === 'true') {
+            aplicarEstadoLimpo();
+        }
+
+        // Restaura a última aba visitada (evita voltar sempre para "Cadastrar clientes")
+        const abaSalva = localStorage.getItem('abaAtiva');
+        if (abaSalva) {
+            const gatilho = document.querySelector('#painelTabs button[data-bs-target="' + abaSalva + '"]');
+            if (gatilho) new bootstrap.Tab(gatilho).show();
+        }
+        document.querySelectorAll('#painelTabs button').forEach(function(botao) {
+            botao.addEventListener('shown.bs.tab', function(evt) {
+                localStorage.setItem('abaAtiva', evt.target.getAttribute('data-bs-target'));
+            });
+        });
+
+        // Lógica do Toast (Bloco 2)
+        const mensagemSucesso = /*[[${sucesso}]]*/ null;
+        const mensagemErro = /*[[${erro}]]*/ null;
+
+        const toastElement = document.getElementById('liveToast');
+        const toastBody = document.getElementById('toastMessage');
+
+        if (mensagemSucesso || mensagemErro) {
+            if (mensagemSucesso) {
+                toastElement.style.backgroundColor = 'var(--green)';
+                toastBody.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> ' + mensagemSucesso;
+            } else if (mensagemErro) {
+                toastElement.style.backgroundColor = 'var(--rust)';
+                toastBody.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i> ' + mensagemErro;
+            }
+
+            const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
+            toast.show();
+        }
+    });
+
+    function limparHistoricoVisualmente() {
+        localStorage.setItem('historicoOculto', 'true');
+        aplicarEstadoLimpo();
+    }
+
+    // Intercepta requisições automáticas do HTMX para o histórico
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+        if (localStorage.getItem('historicoOculto') === 'true' && evt.detail.elt.id === 'tabela-historico-container') {
+            evt.preventDefault();
+        }
+    });
+
+    // Reaplica o filtro de busca após o HTMX atualizar a tabela de "Gerenciar clientes"
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        const buscaAtiva = document.getElementById('inputBuscaCliente');
+        if (buscaAtiva && buscaAtiva.value && evt.detail.target.closest('#gerenciar')) {
+            executarFiltro();
+        }
+    });
+
+    // Função de filtro rápido para a tabela de gerenciar clientes (Bloco 3), com debounce
+    let filtroTimeout;
+    function filtrarClientes() {
+        clearTimeout(filtroTimeout);
+        filtroTimeout = setTimeout(executarFiltro, 200);
+    }
+
+    function executarFiltro() {
+        const input = document.getElementById('inputBuscaCliente').value.toLowerCase();
+        const tabela = document.querySelector('#gerenciar table');
+        const corpo = tabela.querySelector('tbody');
+        const linhas = corpo.querySelectorAll('tr');
+        let visiveis = 0;
+
+        linhas.forEach(linha => {
+            if (linha.querySelector('.empty-state') || linha.classList.contains('no-results-row')) return;
+
+            const textoEmpresa = linha.cells[0] ? linha.cells[0].textContent.toLowerCase() : '';
+            const textoEmail = linha.cells[1] ? linha.cells[1].textContent.toLowerCase() : '';
+            const corresponde = textoEmpresa.includes(input) || textoEmail.includes(input);
+
+            linha.style.display = corresponde ? '' : 'none';
+            if (corresponde) visiveis++;
+        });
+
+        let linhaSemResultado = corpo.querySelector('.no-results-row');
+        if (visiveis === 0 && input.length > 0) {
+            if (!linhaSemResultado) {
+                linhaSemResultado = document.createElement('tr');
+                linhaSemResultado.className = 'no-results-row';
+                const colunas = tabela.querySelectorAll('thead th').length;
+                linhaSemResultado.innerHTML = '<td colspan="' + colunas + '"><i class="bi bi-search me-2"></i>Nenhum cliente encontrado para "' + input.replace(/</g, '&lt;') + '".</td>';
+                corpo.appendChild(linhaSemResultado);
+            }
+        } else if (linhaSemResultado) {
+            linhaSemResultado.remove();
+        }
+    }
+
+    // Função de ação direta nas pendências (Bloco 4)
+    function resolverPendencia(nomeEmpresa) {
+        const triggerEl = document.querySelector('#clientes-tab');
+        if (triggerEl) {
+            const tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+
+        const inputNome = document.querySelector('#clientes input[name="nomeEmpresa"]');
+        if (inputNome) {
+            inputNome.value = nomeEmpresa;
+            inputNome.focus();
+        }
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</body>
+</html>

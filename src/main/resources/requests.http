@@ -1,0 +1,8 @@
+POST http://localhost:8080/clientes
+Content-Type: application/json
+
+{
+  "nomeEmpresa": "Astecob",
+  "email": "astecob@gmail.com",
+  "telefoneWhatsapp": "5511999999999"
+}

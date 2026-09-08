@@ -1,0 +1,26 @@
+# --- DEPENDÊNCIAS E BUILD ---
+target/
+/update_novo.jar
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# --- IDEs ---
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# --- ARQUIVOS DE SISTEMA E LOGS ---
+*.log
+.DS_Store
+
+# --- DADOS SENSÍVEIS E LOCAIS DA APLICAÇÃO (ASTECOB) ---
+.env
+/data/
+guias/
