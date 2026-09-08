@@ -246,4 +246,4 @@ Understand the problem → Model the domain → Implement one block → Test →
 
 **Vinicius Pereira**
 
-Backend Developer — Java & Spring Boot
+ Backend Developer — Java & Spring Boot
