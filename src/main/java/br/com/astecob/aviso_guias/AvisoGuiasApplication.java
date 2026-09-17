@@ -2,6 +2,7 @@ package br.com.astecob.aviso_guias;
 
 import br.com.astecob.aviso_guias.application.service.UpdateService;
 import br.com.astecob.aviso_guias.infrastructure.watcher.WatcherProperties;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,10 +18,16 @@ public class AvisoGuiasApplication {
 	}
 
 	@Bean
-	public CommandLineRunner verificarAtualizacaoAoIniciar(UpdateService updateService) {
-		return args -> {
-			// Roda em segundo plano para não travar a inicialização do sistema
-			new Thread(() -> updateService.verificarAtualizacaoEDownload()).start();
-		};
+	public CommandLineRunner verificarAtualizacaoAoIniciar(
+			ObjectProvider<UpdateService> updateServiceProvider) {
+
+		return args -> updateServiceProvider.ifAvailable(updateService -> {
+			Thread thread = new Thread(
+					updateService::verificarAtualizacaoEDownload,
+					"update-checker"
+			);
+			thread.setDaemon(true);
+			thread.start();
+		});
 	}
 }
